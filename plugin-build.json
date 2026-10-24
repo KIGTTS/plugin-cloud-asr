@@ -1,4 +1,4 @@
 {
-  "module": "recognition-service",
+  "module": "cloud-asr",
   "extraAars": []
 }

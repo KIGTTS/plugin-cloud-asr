@@ -1,12 +1,12 @@
 {
-  "id": "service.speech-recognition",
-  "name": "语音识别服务",
-  "version": "0.8.0",
-  "versionCode": 9,
-  "entryClass": "com.kigtts.engines.recognitionservice.RecognitionServicePlugin",
-  "apiVersion": 9,
+  "id": "engine.cloud-asr",
+  "name": "云端语音识别",
+  "version": "0.1.0",
+  "versionCode": 1,
+  "entryClass": "com.kigtts.engines.cloudasr.CloudAsrPlugin",
+  "apiVersion": 17,
   "minSdk": 26,
   "runtime": "android-dex",
   "license": "MIT",
-  "capabilities": ["asr-service", "asr-batch", "asr-segmented", "asr-incremental", "ui", "resources"]
+  "capabilities": ["asr-batch", "asr-segmented", "ui", "network"]
 }

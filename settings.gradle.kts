@@ -11,7 +11,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories { google(); mavenCentral() }
 }
-rootProject.name = "recognition-service"
+rootProject.name = "cloud-asr"
 include(":plugin-api", ":plugin-android-api")
 project(":plugin-api").projectDir = file(".sdk/plugin-api")
 project(":plugin-android-api").projectDir = file(".sdk/plugin-android-api")
