@@ -14,25 +14,49 @@ class CloudAsrPlugin : KigPlugin {
     override fun page(pageId: String, context: PluginContext): PluginPage? {
         if (pageId != "settings" && !pageId.startsWith("provider/")) return null
         if (pageId.startsWith("provider/")) return providerPage(decode(pageId.substringAfter('/')))
-        val actions = listOf(PageAction("add", "添加识别服务", PluginIcon.ADD))
-        val blocks = mutableListOf<PageBlock>(PageBlock.Text("云端语音识别", true), PageBlock.Notice("仅在你添加并启用接口后使用网络；服务商的可用模型不会自动加入列表。"), PageBlock.Actions(actions))
-        settings.all().forEach { c ->
-            blocks += PageBlock.Group("${c.name} · ${c.provider.label}", listOf(
-                PageBlock.Text(if (c.configured) "已配置 · ${c.language}" else "待配置"),
-                PageBlock.Toggle("启用此接口", c.enabled, "toggle/${encode(c.id)}", icon = PluginIcon.MIC),
-                PageBlock.Actions(listOf(PageAction("provider/${encode(c.id)}", "配置接口", PluginIcon.SETTINGS),
-                    PageAction("select/${encode(c.id)}", if (settings.current()?.id == c.id) "当前服务" else "选用", PluginIcon.STAR),
-                    PageAction("remove/${encode(c.id)}", "移除", PluginIcon.CLOSE)))))
+        val header = ManagementItem("cloud-asr-header", "云端语音识别",
+            "按需添加服务商，配置后再选择要使用的接口", PluginIcon.MIC, symbol = "cloud")
+        val blocks = listOf(
+            PageBlock.Notice("支持腾讯云、阿里云、Arzue、百度云和讯飞。服务商只提供配置模板，模型不会自动加入。"),
+            PageBlock.Actions(listOf(PageAction("add", "添加识别服务", PluginIcon.ADD)))
+        )
+        val current = settings.current()
+        val items = settings.all().map { c ->
+            val configured = c.configured
+            ManagementItem(
+                id = c.id,
+                title = c.name,
+                subtitle = "${c.provider.label} · ${if (configured) "已配置" else "待配置"} · ${c.language}",
+                icon = PluginIcon.MIC,
+                selected = current?.id == c.id,
+                group = "识别服务",
+                primaryAction = "provider/${encode(c.id)}",
+                actions = listOf(
+                    PageAction("select/${encode(c.id)}", if (current?.id == c.id) "当前服务" else "选用", PluginIcon.STAR),
+                    PageAction("remove/${encode(c.id)}", "移除", PluginIcon.CLOSE)
+                ),
+                toggle = ManagementToggle(c.enabled, "toggle/${encode(c.id)}"),
+                symbol = "cloud",
+                badges = listOf(c.provider.label),
+                selection = ManagementSelection("select/${encode(c.id)}", enabled = c.enabled && configured)
+            )
         }
-        return PluginPage(pageId, "云端语音识别", blocks)
+        return PluginPage(pageId, "云端语音识别", blocks,
+            management = ManagementList("cloud-asr-services", items, emptyText = "还没有添加云端识别服务"),
+            header = header)
     }
     private fun providerPage(id: String): PluginPage {
         val c = settings.all().firstOrNull { it.id == id } ?: return PluginPage("provider/$id", "识别服务", listOf(PageBlock.Notice("服务不存在")))
         fun input(label: String, field: String, value: String, secret: Boolean = false) = PageBlock.Input(label, value, "save/${encode(c.id)}/$field", secret = secret, icon = PluginIcon.SETTINGS)
-        return PluginPage("provider/$id", c.name, listOf(PageBlock.Text(c.provider.label, true), input("名称", "name", c.name), input("接口地址", "endpoint", c.endpoint),
-            input("API Key", "apiKey", c.apiKey, true), input("API Secret", "apiSecret", c.apiSecret, true), input("应用 ID", "appId", c.appId),
-            input("模型或接口版本", "model", c.model), input("语言", "language", c.language), PageBlock.Notice("接口地址必须使用 HTTPS；API 密钥保存在本机插件数据中。"),
-            PageBlock.Actions(listOf(PageAction("test/${encode(c.id)}", "测试接口", PluginIcon.HEARING)))))
+        val header = ManagementItem("cloud-asr-provider", c.name,
+            "${c.provider.label} · ${if (c.configured) "已配置" else "待配置"}", PluginIcon.MIC, symbol = "cloud")
+        return PluginPage("provider/$id", c.name, listOf(
+            PageBlock.Group("接口设置", listOf(input("名称", "name", c.name), input("接口地址", "endpoint", c.endpoint),
+                input("API Key", "apiKey", c.apiKey, true), input("API Secret", "apiSecret", c.apiSecret, true),
+                input("应用 ID", "appId", c.appId), input("模型或接口版本", "model", c.model), input("语言", "language", c.language))),
+            PageBlock.Notice("接口地址必须使用 HTTPS；密钥只保存在本机插件数据中。"),
+            PageBlock.Actions(listOf(PageAction("test/${encode(c.id)}", "测试接口", PluginIcon.HEARING)))
+        ), header = header)
     }
     override suspend fun execute(actionId: String, context: PluginContext): PluginOutcome {
         val p = actionId.split('/')
