@@ -1,7 +1,11 @@
-# 语音识别服务插件
+# 云端语音识别
 
-新增服务源码 MIT。服务只包含引擎管理、当前引擎选择与规范识别路由，不链接 sherpa、ONNX Runtime、SenseVoice 或其它引擎实现，不包含模型。
+云端插件源码按 MIT 提供，完整条款见 LICENSE。旧识别服务的复制源码未参与本插件构建或分发。
 
-字幕与语音输入依赖启用的识别服务；服务通过宿主授予的 RecognitionBroker 跨进程调用独立的 PROVIDER 引擎。音频与 Started/Partial/Final 按原引擎传递，取消逐级释放；不将离线分段结果伪装成增量流式，也不在失败时更换语言/引擎。
+## 第三方组件
 
-服务配置与排序在 `appdata/Kigtts/plugin/plugindata/service.speech-recognition/config/`。各引擎模型、下载与其它资源仍在对应引擎自己的 Appdata，服务仅打开其声明的设置/识别包管理页面。MIT 完整许可见 LICENSE。
+- OkHttp 4.12.0 — Copyright 2019 Square, Inc.，Apache License 2.0。
+- Okio 3.6.0 — Copyright 2013 Square, Inc.，Apache License 2.0。
+- Kotlin Standard Library — Copyright JetBrains s.r.o.，Apache License 2.0。
+
+Apache License 2.0 完整条款见 [licenses/Apache-2.0.txt](licenses/Apache-2.0.txt)。各厂商云服务需遵循对应账户及服务条款。

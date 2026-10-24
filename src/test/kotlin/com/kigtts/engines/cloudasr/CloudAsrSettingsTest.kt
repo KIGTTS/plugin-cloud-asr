@@ -17,6 +17,7 @@ class CloudAsrSettingsTest {
         assertTrue(first.all().isEmpty())
         val tencent = first.add(CloudAsrProvider.TENCENT)
         first.update(tencent.id, "apiKey", "local-key")
+        first.update(tencent.id, "apiSecret", "local-secret")
         first.update(tencent.id, "endpoint", "https://example.invalid/asr")
         first.add(CloudAsrProvider.BAIDU)
         assertEquals(listOf("腾讯云", "百度云"), first.all().map { it.provider.label })
@@ -29,7 +30,7 @@ class CloudAsrSettingsTest {
 
     @Test fun invalidEndpointCannotBeSaved() {
         val settings = CloudAsrSettings(PluginStorage(folder.newFolder("two")))
-        val config = settings.add(CloudAsrProvider.ARZUE)
+        val config = settings.add(CloudAsrProvider.AZURE)
         try { settings.update(config.id, "endpoint", "http://insecure.example") ; fail("expected validation") }
         catch (_: IllegalArgumentException) { }
     }
