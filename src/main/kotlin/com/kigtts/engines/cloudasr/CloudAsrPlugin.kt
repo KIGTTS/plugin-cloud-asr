@@ -3,7 +3,7 @@ package com.kigtts.engines.cloudasr
 import com.kigtts.plugin.api.*
 
 class CloudAsrPlugin : KigPlugin {
-    override val descriptor = PluginDescriptor("engine.cloud-asr", "云端语音识别", "使用云端服务识别语音", version = "0.1.1", license = "MIT")
+    override val descriptor = PluginDescriptor("engine.cloud-asr", "云端语音识别", "使用云端服务识别语音", version = "0.1.2", license = "MIT")
     private lateinit var settings: CloudAsrSettings
     private lateinit var engine: CloudAsrEngine
     override val asr: AsrEngine get() = engine
