@@ -32,9 +32,16 @@ class CloudAsrUiTest {
         assertEquals(CloudAsrProvider.AZURE, CloudAsrProvider.of("arzue"))
         for (provider in CloudAsrProvider.entries) {
             val config = CloudAsrConfig("a", provider, "a", provider.defaultEndpoint, apiKey = "key")
-            assertEquals(provider == CloudAsrProvider.AZURE, config.configured)
+            assertEquals(provider in setOf(CloudAsrProvider.AZURE, CloudAsrProvider.DEEPSEEK), config.configured)
             assertFalse(asrFields(config).any { it.key == "appId" } && provider == CloudAsrProvider.TENCENT)
         }
+    }
+    @Test fun deepSeekOnlyShowsApiKeyAndAutomaticLanguage() = runTest {
+        val plugin = plugin()
+        val added = plugin.execute("add/deepseek", context) as PluginOutcome.OpenPluginPage
+        val controls = blocks(plugin.page(added.pageId, context)!!.blocks)
+        assertEquals(listOf("账户名称", "服务地址", "API Key"), controls.filterIsInstance<PageBlock.Input>().map { it.title })
+        assertTrue(controls.contains(PageBlock.Text("自动识别语言")))
     }
     @Test fun badOrObsoleteActionIsAUserMessageInsteadOfAWorkerCrash() = runTest {
         val plugin = plugin()

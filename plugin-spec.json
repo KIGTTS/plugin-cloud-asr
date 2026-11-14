@@ -1,8 +1,8 @@
 {
   "id": "engine.cloud-asr",
   "name": "云端语音识别",
-  "version": "0.1.2",
-  "versionCode": 3,
+  "version": "0.2.0",
+  "versionCode": 4,
   "entryClass": "com.kigtts.engines.cloudasr.CloudAsrPlugin",
   "apiVersion": 28,
   "minSdk": 26,
@@ -10,13 +10,11 @@
   "license": "MIT",
   "capabilities": [
     "asr-batch",
-    "asr-segmented",
     "ui",
     "network"
   ],
   "permissionPurposes": {
     "asr-batch": "将你提交的整段录音转为文字。",
-    "asr-segmented": "逐段处理连续聆听的录音，返回字幕。",
     "network": "将待识别的录音及账户凭据发送给你配置的云服务，获取文字结果。"
   }
 }

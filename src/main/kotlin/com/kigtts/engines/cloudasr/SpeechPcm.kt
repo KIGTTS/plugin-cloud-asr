@@ -5,10 +5,10 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 internal object SpeechPcm {
-    fun validate(audio: PcmAudio) {
+    fun validate(audio: PcmAudio, maxSeconds: Int = 60) {
         if (audio.sampleRate != 16_000 || audio.channels != 1) throw EngineException(EngineError.UNSUPPORTED_FORMAT, "云端识别需要 16 kHz 单声道 PCM 音频")
         if (audio.bytes.isEmpty()) throw EngineException(EngineError.UNSUPPORTED_FORMAT, "录音为空")
-        if (audio.bytes.size > 16_000 * 2 * 60) throw EngineException(EngineError.UNSUPPORTED_FORMAT, "单次录音不能超过 60 秒")
+        if (audio.bytes.size > 16_000 * 2 * maxSeconds) throw EngineException(EngineError.UNSUPPORTED_FORMAT, "单次录音不能超过 $maxSeconds 秒")
         if (audio.bytes.startsWithAscii("RIFF")) throw EngineException(EngineError.UNSUPPORTED_FORMAT, "识别输入应为 PCM 数据，不能包含 WAV 文件头")
     }
     fun wav(audio: PcmAudio): ByteArray {

@@ -12,7 +12,8 @@ enum class CloudAsrProvider(val key: String, val label: String, val defaultEndpo
     ALIYUN("aliyun", "阿里云", "https://nls-gateway-cn-shanghai.aliyuncs.com/stream/v1/asr"),
     AZURE("azure", "Azure", "https://eastasia.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1"),
     BAIDU("baidu", "百度云", "https://vop.baidu.com/server_api"),
-    IFlytek("iflytek", "讯飞", "https://iat-api.xfyun.cn/v2/iat");
+    IFlytek("iflytek", "讯飞", "https://iat-api.xfyun.cn/v2/iat"),
+    DEEPSEEK("deepseek", "DeepSeek", "https://api.deepseek.com/v1/tools/asr");
 
     companion object { fun of(key: String) = entries.firstOrNull { it.key == if (key == "arzue") "azure" else key } ?: AZURE }
 }
@@ -30,7 +31,7 @@ data class CloudAsrConfig(
     val enabled: Boolean = true,
 ) {
     val configured: Boolean get() = runCatching { validate() }.isSuccess && apiKey.isNotBlank() &&
-        (provider == CloudAsrProvider.AZURE || apiSecret.isNotBlank()) &&
+        (provider in setOf(CloudAsrProvider.AZURE, CloudAsrProvider.DEEPSEEK) || apiSecret.isNotBlank()) &&
         (provider !in listOf(CloudAsrProvider.ALIYUN, CloudAsrProvider.IFlytek) || appId.isNotBlank())
     fun validate() {
         val uri = URI(endpoint)

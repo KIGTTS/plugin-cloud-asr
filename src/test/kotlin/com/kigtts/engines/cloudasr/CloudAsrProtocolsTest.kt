@@ -98,14 +98,28 @@ class CloudAsrProtocolsTest {
             try { protocols.recognize(config(CloudAsrProvider.AZURE), sample, "zh-CN"); fail() } catch (error: EngineException) { assertEquals(EngineError.UNSUPPORTED_FORMAT, error.code) }
         }
     }
-    @Test fun streamingNeverCollectsAnUnboundedWholeRecording() = runTest {
-        val settings = CloudAsrSettings(PluginStorage(folder.newFolder())); val service = settings.add(CloudAsrProvider.AZURE)
-        settings.update(service.id, "apiKey", "key")
-        val sizes = mutableListOf<Int>()
-        val engine = CloudAsrEngine(settings, CloudAsrProtocols(FakeTransport { sizes += it.body!!.size; response("""{"RecognitionStatus":"Success","DisplayText":"文"}""") }))
-        val result = engine.recognizeStream(flowOf(PcmAudio(ByteArray(31 * 32000))), RecognitionConfig()).toList()
-        assertEquals(listOf(15 * 32000 + 44, 15 * 32000 + 44, 32000 + 44), sizes)
-        assertEquals(3, result.filterIsInstance<RecognitionEvent.Final>().size)
+    @Test fun deepSeekIsBatchOnlyAndSendsOneWavPartWithBearerKey() = runTest {
+        val settings = CloudAsrSettings(PluginStorage(folder.newFolder())); val service = settings.add(CloudAsrProvider.DEEPSEEK)
+        settings.update(service.id, "apiKey", "fixture")
+        val engine = CloudAsrEngine(settings, CloudAsrProtocols(FakeTransport { r ->
+            assertEquals("https://api.deepseek.com/v1/tools/asr", r.url)
+            assertEquals("Bearer fixture", r.headers["Authorization"])
+            val boundary = r.contentType.substringAfter("boundary=")
+            val bytes = r.body!!
+            val wire = bytes.toString(Charsets.ISO_8859_1)
+            val wav = wire.indexOf("RIFF")
+            assertTrue(wire.startsWith("--$boundary\r\n"))
+            assertTrue(wire.contains("name=\"file\"; filename=\"speech.wav\""))
+            assertTrue(wire.endsWith("\r\n--$boundary--\r\n"))
+            assertArrayEquals(SpeechPcm.wav(audio), bytes.copyOfRange(wav, wav + 44 + audio.bytes.size))
+            response("""{"request_id":"fixture","text":"你好","duration_ms":20}""")
+        }))
+        settings.select(service.id)
+        assertEquals(120, engine.info.maxBatchSeconds)
+        assertEquals(StreamingKind.NONE, engine.info.streaming)
+        assertEquals("你好", engine.recognize(audio, RecognitionConfig("en")).text)
+        try { engine.recognizeStream(flowOf(audio), RecognitionConfig()).toList(); fail() }
+        catch (error: EngineException) { assertEquals(EngineError.UNSUPPORTED_FORMAT, error.code) }
     }
     private class FakeTransport(val handler: (SpeechHttpRequest) -> SpeechHttpResponse) : SpeechTransport {
         override suspend fun http(request: SpeechHttpRequest) = handler(request)

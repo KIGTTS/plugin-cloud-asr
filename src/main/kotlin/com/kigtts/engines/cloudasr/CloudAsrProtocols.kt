@@ -9,7 +9,7 @@ internal class CloudAsrProtocols(private val transport: SpeechTransport = OkSpee
     private val clock: () -> Instant = Instant::now) {
     private val tokens = SpeechTokens(transport, clock)
     suspend fun recognize(config: CloudAsrConfig, audio: PcmAudio, language: String): String {
-        SpeechPcm.validate(audio)
+        SpeechPcm.validate(audio, if (config.provider == CloudAsrProvider.DEEPSEEK) 120 else 60)
         if (!config.configured) throw EngineException(EngineError.NOT_CONFIGURED, "请先填写完整的云端识别配置")
         return when (config.provider) {
             CloudAsrProvider.TENCENT -> tencent(config, audio, language)
@@ -17,6 +17,7 @@ internal class CloudAsrProtocols(private val transport: SpeechTransport = OkSpee
             CloudAsrProvider.AZURE -> azure(config, audio, language)
             CloudAsrProvider.BAIDU -> baidu(config, audio, language)
             CloudAsrProvider.IFlytek -> xfyun(config, audio, language)
+            CloudAsrProvider.DEEPSEEK -> deepSeekAsr(transport, config, audio)
         }
     }
     private suspend fun tencent(c: CloudAsrConfig, audio: PcmAudio, language: String): String {
