@@ -1,8 +1,8 @@
 {
   "id": "engine.cloud-asr",
   "name": "云端语音识别",
-  "version": "0.2.0",
-  "versionCode": 4,
+  "version": "0.2.1",
+  "versionCode": 5,
   "entryClass": "com.kigtts.engines.cloudasr.CloudAsrPlugin",
   "apiVersion": 28,
   "minSdk": 26,
