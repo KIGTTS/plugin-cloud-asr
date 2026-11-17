@@ -4,7 +4,7 @@ import com.kigtts.plugin.api.*
 
 class CloudAsrPlugin : KigPlugin {
     override val descriptor = PluginDescriptor("engine.cloud-asr", "云端语音识别", "使用云端服务识别语音", version = "0.2.1", license = "MIT")
-    override val localization = PluginLocalization("zh-CN", listOf("zh-CN", "en", "ko"))
+    override val localization = PluginLocalization("zh-CN", listOf("zh-CN", "en", "ko", "ja"))
     private var strings = PluginStrings(emptyMap())
 
     private fun labels(locale: String): (String, String) -> String =

@@ -4,31 +4,36 @@ import com.kigtts.plugin.api.*
 
 class RecognitionServicePlugin : KigPlugin {
     override val descriptor = PluginDescriptor("service.speech-recognition", "语音识别服务", "聆听字幕、语音输入与识别包", version = "0.8.0")
+    override val localization = PluginLocalization("zh-CN", listOf("zh-CN", "zh-CN-x-casual", "en", "ko", "ja"))
+    private var strings = PluginStrings(emptyMap())
     private lateinit var settings: RecognitionServiceSettings
     private lateinit var broker: RecognitionBroker
     private lateinit var facade: ServiceRecognition
     override val asr: AsrEngine get() = facade
     override suspend fun attach(environment: PluginEnvironment) {
+        strings = PluginStrings.fromAssets(environment.assets)
         settings = RecognitionServiceSettings(environment.storage)
         broker = requireNotNull(environment.recognitionBroker) { "宿主未授予语音识别服务能力" }
         facade = ServiceRecognition(settings, broker)
     }
-    private val entry = SettingsEntry("manager", "语音识别", "manager", PluginIcon.MIC,
-        cardId = "audio", cardTitle = "音频", summary = "聆听字幕与语音输入")
+    private fun labels(locale: String): (String, String) -> String = { key, fallback -> strings.text(key, locale, fallback = fallback) }
     override val contributions get() = contributions(PluginContext("", ""))
     override fun contributions(context: PluginContext): PluginContributions {
+        val copy = labels(context.locale)
         val selected = context.recognitionServiceId == null || context.recognitionServiceId == descriptor.id
+        val entry = SettingsEntry("manager", copy("entry.title", "语音识别"), "manager", PluginIcon.MIC,
+            cardId = "audio", cardTitle = copy("action.audio", "音频"), summary = copy("entry.summary", "聆听字幕与语音输入"))
         return PluginContributions(settingsEntries = listOf(entry), automationActions = listOf("listen", "close", "input", "continuous"), actions = if (selected) listOf(
-            UiAction("listen", if (captionSession(context)) "关闭聆听" else "开始聆听", UiSlot.EDITOR_TOP_START,
+            UiAction("listen", if (captionSession(context)) copy("action.close_listen", "关闭聆听") else copy("action.start_listen", "开始聆听"), UiSlot.EDITOR_TOP_START,
                 PluginIcon.HEARING, buttonStyle = UiButtonStyle.ICON_TEXT),
-            UiAction("close", "关闭聆听", UiSlot.LISTENING_BOTTOM_END, PluginIcon.CLOSE),
-            UiAction("continuous", if (context.continuousRecognition) "停止连续输入" else "连续语音输入",
+            UiAction("close", copy("action.close_listen", "关闭聆听"), UiSlot.LISTENING_BOTTOM_END, PluginIcon.CLOSE),
+            UiAction("continuous", if (context.continuousRecognition) copy("action.stop_continuous", "停止连续输入") else copy("action.continuous", "连续语音输入"),
                 UiSlot.EDITOR_MENU, PluginIcon.MIC, UiPresentation.MENU_ITEM),
         ) else emptyList(), gestures = if (selected && settings.voiceInput)
-            listOf(GestureAction("input", if (context.continuousRecognition) "停止连续输入" else "语音输入", PluginGesture.QUICK_TEXT_LONG_PRESS))
+            listOf(GestureAction("input", if (context.continuousRecognition) copy("action.stop_continuous", "停止连续输入") else copy("action.voice_input", "语音输入"), PluginGesture.QUICK_TEXT_LONG_PRESS))
             else emptyList())
     }
-    override fun page(pageId: String, context: PluginContext) = recognitionServicePage(pageId, settings, broker, context, descriptor.id)
+    override fun page(pageId: String, context: PluginContext) = recognitionServicePage(pageId, settings, broker, context, descriptor.id, labels(context.locale))
     override suspend fun execute(actionId: String, context: PluginContext): PluginOutcome {
         val parts = actionId.split('/'); val id = parts.getOrNull(1)
         fun provider() = broker.providers().first { it.pluginId == id }
