@@ -34,12 +34,16 @@ data class CloudAsrConfig(
         (provider in setOf(CloudAsrProvider.AZURE, CloudAsrProvider.DEEPSEEK) || apiSecret.isNotBlank()) &&
         (provider !in listOf(CloudAsrProvider.ALIYUN, CloudAsrProvider.IFlytek) || appId.isNotBlank())
     fun validate() {
-        val uri = URI(endpoint)
-        require(uri.scheme == "https" || provider == CloudAsrProvider.IFlytek && uri.scheme == "wss") { "接口地址必须使用 HTTPS" }
-        require(!uri.host.isNullOrBlank() && uri.rawUserInfo == null && uri.rawFragment == null) { "请输入有效的服务接口地址" }
-        require(name.length <= 100 && apiKey.length <= 4096 && apiSecret.length <= 4096 && appId.length <= 512 && model.length <= 256 && language.length <= 64) { "设置内容过长" }
+        val uri = try { URI(endpoint) } catch (_: java.net.URISyntaxException) {
+            throw CloudSettingIssue("feedback.endpoint", "请输入有效的服务接口地址")
+        }
+        require(uri.scheme == "https" || provider == CloudAsrProvider.IFlytek && uri.scheme == "wss") { throw CloudSettingIssue("feedback.https", "接口地址必须使用 HTTPS") }
+        require(!uri.host.isNullOrBlank() && uri.rawUserInfo == null && uri.rawFragment == null) { throw CloudSettingIssue("feedback.endpoint", "请输入有效的服务接口地址") }
+        require(name.length <= 100 && apiKey.length <= 4096 && apiSecret.length <= 4096 && appId.length <= 512 && model.length <= 256 && language.length <= 64) { throw CloudSettingIssue("feedback.too_long", "设置内容过长") }
     }
 }
+
+internal fun CloudAsrProvider.displayName(copy: SpeechCopy): String = copy("feedback.$key", label)
 
 internal class CloudAsrSettings(private val storage: PluginStorage) {
     private val file = storage.file("config/cloud-asr.json").also { storage.configuration }
@@ -71,7 +75,7 @@ internal class CloudAsrSettings(private val storage: PluginStorage) {
         configs += config; selectedId = config.id; save(); return config
     }
     fun update(id: String, field: String, value: String): CloudAsrConfig {
-        val index = configs.indexOfFirst { it.id == id }; require(index >= 0) { "找不到识别服务" }
+        val index = configs.indexOfFirst { it.id == id }; require(index >= 0) { throw CloudSettingIssue("account.removed", "此账户已移除") }
         val old = configs[index]
         val next = when (field) {
             "name" -> old.copy(name = value)
@@ -81,12 +85,12 @@ internal class CloudAsrSettings(private val storage: PluginStorage) {
             "appId" -> old.copy(appId = value)
             "model" -> old.copy(model = value)
             "language" -> old.copy(language = value)
-            else -> error("不支持的识别服务设置")
+            else -> throw CloudSettingIssue("action.settings_gone", "此设置项已失效")
         }
         next.validate(); configs[index] = next; save(); return next
     }
     fun toggle(id: String): CloudAsrConfig { val i = configs.indexOfFirst { it.id == id }; require(i >= 0); configs[i] = configs[i].copy(enabled = !configs[i].enabled); save(); return configs[i] }
-    fun select(id: String) { require(configs.any { it.id == id && it.enabled && it.configured }) { "请先完成服务配置并启用" }; selectedId = id; save() }
+    fun select(id: String) { require(configs.any { it.id == id && it.enabled && it.configured }) { throw CloudSettingIssue("feedback.configure", "请先完成服务配置并启用") }; selectedId = id; save() }
     fun remove(id: String) { configs.removeIf { it.id == id }; if (selectedId == id) selectedId = configs.firstOrNull()?.id; save() }
     fun save() {
         val array = JSONArray(); configs.forEach { c -> array.put(JSONObject().put("id", c.id).put("provider", c.provider.key)

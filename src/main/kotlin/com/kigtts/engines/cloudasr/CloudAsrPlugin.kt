@@ -3,7 +3,7 @@ package com.kigtts.engines.cloudasr
 import com.kigtts.plugin.api.*
 
 class CloudAsrPlugin : KigPlugin {
-    override val descriptor = PluginDescriptor("engine.cloud-asr", "云端语音识别", "使用云端服务识别语音", version = "0.2.1", license = "MIT")
+    override val descriptor = PluginDescriptor("engine.cloud-asr", "云端语音识别", "使用云端服务识别语音", version = "0.2.2", license = "MIT")
     override val localization = PluginLocalization("zh-CN", listOf("zh-CN", "en", "ko", "ja"))
     private var strings = PluginStrings(emptyMap())
 
@@ -13,7 +13,7 @@ class CloudAsrPlugin : KigPlugin {
     private lateinit var settings: CloudAsrSettings
     private lateinit var engine: CloudAsrEngine
     override val asr: AsrEngine get() = engine
-    override suspend fun attach(environment: PluginEnvironment) { strings = PluginStrings.fromAssets(environment.assets); settings = CloudAsrSettings(environment.storage); engine = CloudAsrEngine(settings) }
+    override suspend fun attach(environment: PluginEnvironment) { strings = PluginStrings.fromAssets(environment.assets); settings = CloudAsrSettings(environment.storage); engine = CloudAsrEngine(settings, copy = { key, fallback -> strings.text(key, environment.locale, fallback = fallback) }) }
     override val contributions get() = contributions(PluginContext("", ""))
     override fun contributions(context: PluginContext): PluginContributions {
         val copy = labels(context.locale)
@@ -27,26 +27,28 @@ class CloudAsrPlugin : KigPlugin {
         return try {
             val p = actionId.split('/')
             fun id() = asrDecode(requireNotNull(p.getOrNull(1)))
-            fun account() = settings.all().firstOrNull { it.id == id() } ?: error(copy("account.removed", "此账户已移除"))
+            fun account() = settings.all().firstOrNull { it.id == id() } ?: throw LocalizedSettingIssue(copy("account.removed", "此账户已移除"))
             when (p[0]) {
                 "provider" -> { account(); PluginOutcome.OpenPluginPage(descriptor.id, actionId) }
-                "add" -> if (p.size == 1) PluginOutcome.Menu(copy("action.choose_provider", "选择服务商"), CloudAsrProvider.entries.map { PageAction("add/${it.key}", it.label, PluginIcon.MIC) })
+                "add" -> if (p.size == 1) PluginOutcome.Menu(copy("action.choose_provider", "选择服务商"), CloudAsrProvider.entries.map { PageAction("add/${it.key}", it.displayName(copy), PluginIcon.MIC) })
                     else { val next = settings.add(CloudAsrProvider.of(p[1])); PluginOutcome.OpenPluginPage(descriptor.id, "provider/${asrEncode(next.id)}") }
                 "toggle" -> { settings.toggle(id()); PluginOutcome.RefreshUi }
                 "select" -> { settings.select(id()); PluginOutcome.RefreshUi }
-                "remove" -> { val c = account(); PluginOutcome.Confirm(copy("action.remove_account", "移除此账户？"), c.name, PageAction("remove-confirm/${asrEncode(c.id)}", copy("account.remove", "移除"), PluginIcon.CLOSE, symbol = "delete")) }
+                "remove" -> { val c = account(); PluginOutcome.Confirm(copy("action.remove_account", "移除此账户？"), c.name, PageAction("remove-confirm/${asrEncode(c.id)}", copy("account.remove", "移除"), PluginIcon.CLOSE, symbol = "delete"), cancelLabel = copy("feedback.cancel", "取消")) }
                 "remove-confirm" -> { settings.remove(id()); PluginOutcome.RefreshUi }
                 "edit" -> {
-                    val c = account(); val field = asrFields(c, copy).firstOrNull { it.key == p.getOrNull(2) } ?: error(copy("action.settings_gone", "此设置项已失效"))
+                    val c = account(); val field = asrFields(c, copy).firstOrNull { it.key == p.getOrNull(2) } ?: throw LocalizedSettingIssue(copy("action.settings_gone", "此设置项已失效"))
                     PluginOutcome.TextInput(field.label, "save/${asrEncode(c.id)}/${field.key}", field.value, secret = field.secret)
                 }
                 "save" -> {
-                    require(context.inputs.containsKey("value")) { copy("action.input_retry", "请重新打开设置项并保存") }
+                    require(context.inputs.containsKey("value")) { throw LocalizedSettingIssue(copy("action.input_retry", "请重新打开设置项并保存")) }
                     settings.update(id(), requireNotNull(p.getOrNull(2)), context.inputs.getValue("value").trim()); PluginOutcome.RefreshUi
                 }
                 else -> PluginOutcome.Message(copy("action.result_gone", "此操作已失效，请重新打开页面"))
             }
-        } catch (error: IllegalArgumentException) { PluginOutcome.Message(error.message ?: copy("action.account_check", "请检查账户设置")) }
-          catch (error: IllegalStateException) { PluginOutcome.Message(error.message ?: copy("action.result_gone", "此操作已失效，请重新打开页面")) }
+        } catch (error: CloudSettingIssue) { PluginOutcome.Message(copy(error.key, requireNotNull(error.message))) }
+        catch (error: LocalizedSettingIssue) { PluginOutcome.Message(requireNotNull(error.message)) }
+        catch (_: IllegalArgumentException) { PluginOutcome.Message(copy("action.account_check", "请检查账户设置")) }
+          catch (_: IllegalStateException) { PluginOutcome.Message(copy("action.result_gone", "此操作已失效，请重新打开页面")) }
     }
 }

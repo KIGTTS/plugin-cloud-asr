@@ -29,7 +29,7 @@ internal fun asrSettingsPage(settings: CloudAsrSettings, pageId: String, copy: (
     ), header = ManagementItem("cloud-asr-header", copy("plugin.title", "云端语音识别"), copy("plugin.description", "选择云端服务识别语音"), PluginIcon.MIC, symbol = "cloud"),
         management = ManagementList("cloud-asr-services", settings.all().map { c -> ManagementItem(
             id = c.id, title = c.name, subtitle = if (!c.configured) copy("account.pending", "待配置") else if (c.provider == CloudAsrProvider.DEEPSEEK) copy("account.auto_lang", "自动识别语言") else c.language, icon = PluginIcon.MIC,
-            group = copy("account.added", "已添加的账户"), primaryAction = "provider/${asrEncode(c.id)}", symbol = "cloud", badges = listOf(c.provider.label),
+            group = copy("account.added", "已添加的账户"), primaryAction = "provider/${asrEncode(c.id)}", symbol = "cloud", badges = listOf(c.provider.displayName(copy)),
             selected = settings.current()?.id == c.id,
             actions = listOf(PageAction("remove/${asrEncode(c.id)}", copy("account.remove", "移除"), PluginIcon.CLOSE, symbol = "delete")),
             toggle = ManagementToggle(c.enabled, "toggle/${asrEncode(c.id)}"),
@@ -46,7 +46,7 @@ internal fun asrSettingsPage(settings: CloudAsrSettings, pageId: String, copy: (
         PageBlock.Group(copy("account.options", "识别选项"), if (recognition.isEmpty()) listOf(PageBlock.Text(copy("account.auto_lang", "自动识别语言"))) else recognition.map(::input)),
         PageBlock.Group(copy("account.single", "账户"), listOf(PageBlock.Toggle(copy("account.enable", "启用账户"), c.enabled, "toggle/${asrEncode(c.id)}", icon = PluginIcon.MIC),
             PageBlock.Actions(listOf(PageAction("select/${asrEncode(c.id)}", copy("account.use", "使用此账户"), PluginIcon.STAR, symbol = "check")))))
-    ), header = ManagementItem("cloud-asr-account", c.name, c.provider.label, PluginIcon.MIC, symbol = "cloud"))
+    ), header = ManagementItem("cloud-asr-account", c.name, c.provider.displayName(copy), PluginIcon.MIC, symbol = "cloud"))
 }
 
 internal fun asrEncode(value: String) = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(value.toByteArray(Charsets.UTF_8))

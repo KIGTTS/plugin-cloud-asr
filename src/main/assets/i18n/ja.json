@@ -61,5 +61,20 @@
   "engine.batch": "録音認識",
   "engine.streaming": "ストリーミング音声認識",
   "engine.cloud": "クラウド音声認識",
-  "engine.sensevoice": "SenseVoice 音声認識"
+  "engine.sensevoice": "SenseVoice 音声認識",
+  "feedback.cancel": "キャンセル",
+  "feedback.https": "HTTPSのエンドポイントを使用してください",
+  "feedback.endpoint": "有効なサービスのエンドポイントを入力してください",
+  "feedback.too_long": "設定値が長すぎます",
+  "feedback.configure": "先にサービスを設定して有効にしてください",
+  "feedback.credentials": "クラウドアカウントの設定と権限を確認してください",
+  "feedback.input_format": "クラウドサービスはこの音声形式に対応していません",
+  "feedback.request_failed": "クラウドへのリクエストに失敗しました。アカウント、ネットワーク接続、サービスの権限を確認してください",
+  "feedback.unavailable": "クラウドサービスに接続できません。ネットワーク接続を確認してください",
+  "feedback.timeout": "クラウドへのリクエストがタイムアウトしました。再試行してください",
+  "feedback.tencent": "Tencent Cloud",
+  "feedback.aliyun": "Alibaba Cloud",
+  "feedback.baidu": "Baidu AI Cloud",
+  "feedback.iflytek": "iFLYTEK",
+  "feedback.batch_only": "このサービスは区間ごとの音声認識にのみ対応しています"
 }

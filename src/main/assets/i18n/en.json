@@ -61,5 +61,20 @@
   "engine.batch": "Recording recognition",
   "engine.streaming": "Streaming speech recognition",
   "engine.cloud": "Cloud speech recognition",
-  "engine.sensevoice": "SenseVoice speech recognition"
+  "engine.sensevoice": "SenseVoice speech recognition",
+  "feedback.cancel": "Cancel",
+  "feedback.https": "Use an HTTPS endpoint",
+  "feedback.endpoint": "Enter a valid service endpoint",
+  "feedback.too_long": "A setting exceeds the length limit",
+  "feedback.configure": "Configure and enable the service first",
+  "feedback.credentials": "Check the cloud account settings and permissions",
+  "feedback.input_format": "The cloud service does not support this audio format",
+  "feedback.request_failed": "Cloud request failed. Check the account, network connection and service permissions.",
+  "feedback.unavailable": "Could not connect to the cloud service. Check your network connection.",
+  "feedback.timeout": "Cloud request timed out. Try again.",
+  "feedback.tencent": "Tencent Cloud",
+  "feedback.aliyun": "Alibaba Cloud",
+  "feedback.baidu": "Baidu AI Cloud",
+  "feedback.iflytek": "iFLYTEK",
+  "feedback.batch_only": "This service recognizes one segment at a time"
 }
